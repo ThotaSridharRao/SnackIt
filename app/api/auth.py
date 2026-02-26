@@ -24,6 +24,7 @@ async def register_user(user: schemas.UserCreate, db: AsyncIOMotorDatabase = Dep
         "name": user.name,
         "role": user.role.value,  # Store the enum value
         "preferred_language": user.preferred_language,
+        "saved_items": [],
         "created_at": datetime.utcnow()
     }
     
@@ -36,6 +37,7 @@ async def register_user(user: schemas.UserCreate, db: AsyncIOMotorDatabase = Dep
         "name": user.name,
         "role": RoleEnum(user.role.value),
         "preferred_language": user.preferred_language,
+        "saved_items": [],
         "created_at": new_user["created_at"]
     }
 
@@ -58,3 +60,44 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncIOMot
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/saved/{item_id}")
+async def save_item(item_id: str, db: AsyncIOMotorDatabase = Depends(database.get_db), current_user: dict = Depends(security.get_current_user)):
+    user_email = current_user.get("sub")
+    await db.users.update_one(
+        {"email": user_email},
+        {"$addToSet": {"saved_items": item_id}}
+    )
+    return {"success": True, "message": "Item saved successfully"}
+
+@router.delete("/saved/{item_id}")
+async def remove_saved_item(item_id: str, db: AsyncIOMotorDatabase = Depends(database.get_db), current_user: dict = Depends(security.get_current_user)):
+    user_email = current_user.get("sub")
+    await db.users.update_one(
+        {"email": user_email},
+        {"$pull": {"saved_items": item_id}}
+    )
+    return {"success": True, "message": "Item removed successfully"}
+
+@router.get("/saved")
+async def get_saved_items(db: AsyncIOMotorDatabase = Depends(database.get_db), current_user: dict = Depends(security.get_current_user)):
+    user_email = current_user.get("sub")
+    user = await db.users.find_one({"email": user_email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    saved_ids = user.get("saved_items", [])
+    
+    # Fetch actual item documents
+    cursor = db.items.find({"id": {"$in": saved_ids}})
+    items = await cursor.to_list(length=100)
+    
+    result = []
+    for item in items:
+        item_id = str(item.get("_id", item.get("id")))
+        result.append({
+            **item,
+            "id": item_id,
+            "stallName": item.get("vendor", {}).get("stallName", "Unknown")
+        })
+    return result

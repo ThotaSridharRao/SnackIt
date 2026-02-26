@@ -17,6 +17,7 @@ class UserOut(UserBase):
     id: str
     role: RoleEnum
     preferred_language: str
+    saved_items: List[str] = []
     created_at: datetime
     
     class Config:
