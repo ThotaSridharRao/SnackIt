@@ -1,21 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.database import engine
-from app.models import models
 from app.api import auth, items
+from dotenv import load_dotenv
 
-# Create Database Tables
-models.Base.metadata.create_all(bind=engine)
+load_dotenv()
 
 app = FastAPI(
     title="snack it! API",
-    description="Backend API for the snack it! MVP",
+    description="Backend API for the snack it! MVP (Now Powered by MongoDB)",
     version="1.0.0"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For development testing with Expo
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -14,7 +14,7 @@ class UserCreate(UserBase):
     preferred_language: str = "English"
 
 class UserOut(UserBase):
-    id: int
+    id: str
     role: RoleEnum
     preferred_language: str
     created_at: datetime

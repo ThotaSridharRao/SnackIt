@@ -3,11 +3,13 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from typing import Optional
 import os
+from dotenv import load_dotenv
 
-# Note: In production, secret key should be secure and loaded from env
+load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY", "b4025a1e2db2376e1a784d53867bf2a6941203794ffef1748231c50cbbeeb976")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
